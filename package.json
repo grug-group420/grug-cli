@@ -1,0 +1,12 @@
+{
+  "name": "grug-cli",
+  "version": "1.0.0",
+  "description": "Simple CLI tools the grug way",
+  "main": "index.js",
+  "bin": { "grug": "./index.js" },
+  "scripts": { "start": "node index.js" },
+  "keywords": ["cli", "grug", "simple", "tools"],
+  "author": "grug-group420",
+  "license": "MIT",
+  "repository": "https://github.com/grug-group420/grug-cli"
+}
