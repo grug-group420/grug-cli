@@ -10,4 +10,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v1
-      - run: bun run index.ts --help || echo "✅ grug-cli loads"
+      - run: bun run index.js --help || echo "✅ grug-cli loads"
