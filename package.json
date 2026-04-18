@@ -1,13 +1,19 @@
 {
   "name": "grug-cli",
   "version": "1.0.0",
-  "description": "🪨 Zero-dependency developer toolkit following grug-brained principles",
+  "description": "Zero-dependency developer toolkit \u2014 init, loc, deps, clean, ship, todo, size, env",
   "main": "index.ts",
   "bin": {
     "grug-cli": "./index.ts"
   },
   "type": "module",
-  "keywords": ["cli", "developer-tools", "bun", "grug", "zero-dependencies"],
+  "keywords": [
+    "cli",
+    "developer-tools",
+    "bun",
+    "grug",
+    "zero-dependencies"
+  ],
   "author": "grug-group420",
   "license": "MIT",
   "repository": {
