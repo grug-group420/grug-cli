@@ -176,6 +176,103 @@ const commands = {
         }
     },
 
+    bench: {
+        desc: 'Benchmark project scan (loc + size + todo)',
+        run: (dir = '.', iters = 5) => {
+            const n = Math.max(1, parseInt(iters) || 5);
+            console.log(`⏱️  Benchmarking project scans on ${dir} (${n} iters each)\n`);
+
+            const measure = (label, fn) => {
+                // warm up the disk cache once, untimed
+                fn();
+                const samples = [];
+                for (let i = 0; i < n; i++) {
+                    const t0 = process.hrtime.bigint();
+                    const result = fn();
+                    const t1 = process.hrtime.bigint();
+                    samples.push(Number(t1 - t0) / 1e6); // ms
+                    if (i === 0) samples.result = result;
+                }
+                samples.sort((a, b) => a - b);
+                const min = samples[0];
+                const max = samples[samples.length - 1];
+                const avg = samples.reduce((s, x) => s + x, 0) / samples.length;
+                const med = samples[Math.floor(samples.length / 2)];
+                console.log(
+                    `  ${label.padEnd(8)} avg=${avg.toFixed(2)}ms ` +
+                    `med=${med.toFixed(2)}ms min=${min.toFixed(2)}ms max=${max.toFixed(2)}ms` +
+                    (samples.result !== undefined ? `   (${samples.result})` : '')
+                );
+                return avg;
+            };
+
+            const skip = (f) => f.startsWith('.') || f === 'node_modules';
+
+            const scanLoc = () => {
+                let total = 0, files = 0;
+                const walk = (d) => {
+                    for (const f of fs.readdirSync(d)) {
+                        if (skip(f)) continue;
+                        const p = path.join(d, f);
+                        const st = fs.statSync(p);
+                        if (st.isDirectory()) walk(p);
+                        else if (/\.(js|ts|py|go|rs|c|h|java|rb)$/.test(f)) {
+                            total += fs.readFileSync(p, 'utf8').split('\n').length;
+                            files++;
+                        }
+                    }
+                };
+                walk(dir);
+                return `${total} loc, ${files} files`;
+            };
+
+            const scanSize = () => {
+                let bytes = 0, files = 0;
+                const walk = (d) => {
+                    for (const f of fs.readdirSync(d)) {
+                        if (skip(f)) continue;
+                        const p = path.join(d, f);
+                        const st = fs.statSync(p);
+                        if (st.isDirectory()) walk(p);
+                        else { bytes += st.size; files++; }
+                    }
+                };
+                walk(dir);
+                return `${(bytes / 1024).toFixed(1)} KB, ${files} files`;
+            };
+
+            const scanTodo = () => {
+                let hits = 0;
+                const walk = (d) => {
+                    for (const f of fs.readdirSync(d)) {
+                        if (skip(f)) continue;
+                        const p = path.join(d, f);
+                        const st = fs.statSync(p);
+                        if (st.isDirectory()) walk(p);
+                        else if (/\.(js|ts|py|go|rs|c|h|java|rb|md)$/.test(f)) {
+                            const txt = fs.readFileSync(p, 'utf8');
+                            const m = txt.match(/TODO|FIXME|HACK|XXX/g);
+                            if (m) hits += m.length;
+                        }
+                    }
+                };
+                walk(dir);
+                return `${hits} todo hits`;
+            };
+
+            const t1 = measure('loc',  scanLoc);
+            const t2 = measure('size', scanSize);
+            const t3 = measure('todo', scanTodo);
+
+            const total = t1 + t2 + t3;
+            const verdict = total < 50 ? '🟢 fast'
+                          : total < 250 ? '🟡 ok'
+                          : '🔴 slow (consider .gitignore-style excludes)';
+            console.log(`\n  total avg = ${total.toFixed(2)}ms  ${verdict}`);
+            console.log('🦴 grug benchmark complete.');
+        }
+    },
+
     help: {
         desc: 'Show this help',
         run: () => {
