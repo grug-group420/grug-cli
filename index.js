@@ -101,6 +101,81 @@ const commands = {
         }
     },
     
+
+    todo: {
+        desc: 'Scan for TODO/FIXME/HACK comments',
+        run: (dir = '.') => {
+            const results = [];
+            const scan = (d) => {
+                fs.readdirSync(d).forEach(f => {
+                    const p = path.join(d, f);
+                    if (f.startsWith('.') || f === 'node_modules') return;
+                    if (fs.statSync(p).isDirectory()) scan(p);
+                    else if (/\.(js|ts|py|go|rs|c|h|java|rb|md)$/.test(f)) {
+                        const lines = fs.readFileSync(p, 'utf8').split('\n');
+                        lines.forEach((line, i) => {
+                            if (/TODO|FIXME|HACK|XXX/.test(line)) {
+                                results.push(`  ${p}:${i+1}  ${line.trim()}`);
+                            }
+                        });
+                    }
+                });
+            };
+            scan(dir);
+            if (results.length === 0) {
+                console.log('✅ No TODOs found. Grug impressed.');
+            } else {
+                console.log(`📋 Found ${results.length} TODO(s):\n`);
+                results.forEach(r => console.log(r));
+            }
+        }
+    },
+
+    size: {
+        desc: 'Find largest files in project',
+        run: (dir = '.', limit = 10) => {
+            const files = [];
+            const scan = (d) => {
+                fs.readdirSync(d).forEach(f => {
+                    const p = path.join(d, f);
+                    if (f.startsWith('.') || f === 'node_modules') return;
+                    const stat = fs.statSync(p);
+                    if (stat.isDirectory()) scan(p);
+                    else files.push({ path: p, size: stat.size });
+                });
+            };
+            scan(dir);
+            files.sort((a, b) => b.size - a.size);
+            const fmt = (b) => b > 1024*1024 ? `${(b/1024/1024).toFixed(1)}MB` : b > 1024 ? `${(b/1024).toFixed(1)}KB` : `${b}B`;
+            console.log(`📦 Largest ${Math.min(limit, files.length)} files:\n`);
+            files.slice(0, parseInt(limit)).forEach(f => {
+                const flag = f.size > 500*1024 ? ' ⚠️' : '';
+                console.log(`  ${fmt(f.size).padEnd(8)} ${f.path}${flag}`);
+            });
+        }
+    },
+
+    env: {
+        desc: 'List .env keys (no values shown)',
+        run: (file = '.env') => {
+            if (!fs.existsSync(file)) {
+                console.log(`❌ ${file} not found`);
+                return;
+            }
+            const lines = fs.readFileSync(file, 'utf8').split('\n');
+            const keys = lines
+                .filter(l => l.trim() && !l.startsWith('#') && l.includes('='))
+                .map(l => l.split('=')[0].trim());
+            if (keys.length === 0) {
+                console.log('📭 No keys found');
+                return;
+            }
+            console.log(`🔑 ${file} keys (${keys.length}):\n`);
+            keys.forEach(k => console.log(`  ${k}`));
+            console.log('\n🔒 Values hidden. Grug protect secrets.');
+        }
+    },
+
     help: {
         desc: 'Show this help',
         run: () => {
