@@ -1,12 +1,11 @@
 {
-  "name": "grug-cli",
+  "name": "grug-toolkit",
   "version": "1.0.0",
   "description": "Zero-dependency developer toolkit \u2014 init, loc, deps, clean, ship, todo, size, env",
-  "main": "index.ts",
+  "main": "index.js",
   "bin": {
-    "grug-cli": "./index.ts"
+    "grug-cli": "./index.js"
   },
-  "type": "module",
   "keywords": [
     "cli",
     "developer-tools",
